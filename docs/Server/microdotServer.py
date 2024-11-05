@@ -38,7 +38,7 @@ app = Microdot()
 CORS(app, allowed_origins = '*', allow_credentials = True)
 
 @app.get('/test')
-def index(requsst):
+def index(request):
     return "hello world"
 
 @app.get('/direction')

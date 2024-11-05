@@ -66,8 +66,9 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     resetStickPosition(); // Initialize stick position
 
     //Initialize WebSocket connection
-    let socket = new WebSocket("ws://[ESP32's IP Address]:[Port #]/[Route]");
+    let socket = new WebSocket("ws://172.20.10.4:80/direction]"); //[ip]:[port]/[route]
     socket.addEventListener("open", () => {
         socket.send("Hello Server!"); 
     });
+    //figure out how to host web controller 
 });
