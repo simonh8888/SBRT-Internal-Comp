@@ -13,9 +13,12 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const moveStick = (x, y) => {
         stick.style.top = `${y + radius}px`;
         stick.style.left = `${x + radius}px`;
+        
+        console.log(JSON.stringify({ x, y: -y })); //debug
+        
         // Send coordinates via WebSocket
         if (socket.readyState === WebSocket.OPEN) { 
-            socket.send(JSON.stringify({ x, y }));
+            socket.send(JSON.stringify({ x, y: -y }));
         }
     };
 
@@ -66,9 +69,11 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     resetStickPosition(); // Initialize stick position
 
     //Initialize WebSocket connection
-    let socket = new WebSocket("ws://172.20.10.4:80/direction]"); //[ip]:[port]/[route]
+    /*let socket = new WebSocket("ws://172.20.10.4:80/direction]"); //[ip]:[port]/[route]
     socket.addEventListener("open", () => {
         socket.send("Hello Server!"); 
-    });
-    //figure out how to host web controller 
+    });*/
+    
+    /*figure out how to host web controller: open python terminal 
+    python -m http.server 8000*/
 });

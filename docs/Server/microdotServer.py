@@ -1,3 +1,4 @@
+# Run these on thonny
 from microdot import Microdot
 from microdot.websocket import with_websocket
 from microdot.cors import CORS
