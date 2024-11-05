@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const moveStick = (x, y) => {
         stick.style.top = `${y + radius}px`;
         stick.style.left = `${x + radius}px`;
+        // Send coordinates via WebSocket
+        if (socket.readyState === WebSocket.OPEN) { 
+            socket.send(JSON.stringify({ x, y }));
+        }
     };
 
     const handleMovement = (clientX, clientY) => {
@@ -60,4 +64,10 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     document.addEventListener('touchend', stopDragging);
 
     resetStickPosition(); // Initialize stick position
+
+    //Initialize WebSocket connection
+    let socket = new WebSocket("ws://[ESP32's IP Address]:[Port #]/[Route]");
+    socket.addEventListener("open", () => {
+        socket.send("Hello Server!"); 
+    });
 });
