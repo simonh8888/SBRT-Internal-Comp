@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const stick = document.getElementsByClassName('stick')[0];
     const radius = joystick.offsetWidth / 2; // Use half the joystick's width as radius
     let dragging = false;
+    let x = 0;
+    let y = 0;
+    let led = 0;
 
     const resetStickPosition = () => {
         stick.style.top = '50%'; // Center vertically
@@ -13,19 +16,12 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const moveStick = (x, y) => {
         stick.style.top = `${y + radius}px`;
         stick.style.left = `${x + radius}px`;
-        
-        console.log(JSON.stringify({ x, y: -y })); //debug
-        
-        // Send coordinates via WebSocket
-        if (socket.readyState === WebSocket.OPEN) { 
-            socket.send(JSON.stringify({ x, y: -y }));
-        }
     };
 
     const handleMovement = (clientX, clientY) => {
         const rect = joystick.getBoundingClientRect();
-        let x = clientX - rect.left - radius; // Offset to center
-        let y = clientY - rect.top - radius; // Offset to center
+        x = clientX - rect.left - radius; // Offset to center
+        y = clientY - rect.top - radius; // Offset to center
 
         // Calculate the distance from the center
         const distance = Math.sqrt(x * x + y * y);
@@ -43,19 +39,34 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     const startDragging = (event) => {
         dragging = true;
+        led = 1;
+
+        // Handle initial movement
         handleMovement(event.touches ? event.touches[0].clientX : event.clientX,
-                       event.touches ? event.touches[0].clientY : event.clientY);
+            event.touches ? event.touches[0].clientY : event.clientY);
+
+        //continuously sends coordinates
+        
+        sendInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                console.log(JSON.stringify({ x, y: -y, led: led })); //debug
+                socket.send(JSON.stringify({ x, y: -y, led: led }));
+            }
+        }, 100); // Adjust the interval as needed (in milliseconds)
     };
 
     const stopDragging = () => {
         dragging = false;
+        x = 0;
+        y = 0;
+        led = 0;
         resetStickPosition();
     };
 
     const drag = (event) => {
         if (!dragging) return;
         handleMovement(event.touches ? event.touches[0].clientX : event.clientX,
-                       event.touches ? event.touches[0].clientY : event.clientY);
+            event.touches ? event.touches[0].clientY : event.clientY);
     };
 
     joystick.addEventListener('mousedown', startDragging);
@@ -69,11 +80,11 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     resetStickPosition(); // Initialize stick position
 
     //Initialize WebSocket connection
-    /*let socket = new WebSocket("ws://172.20.10.4:80/direction]"); //[ip]:[port]/[route]
+    let socket = new WebSocket("ws://172.20.10.4:80/direction"); //[ip]:[port]/[route]
     socket.addEventListener("open", () => {
-        socket.send("Hello Server!"); 
-    });*/
-    
+        socket.send("Hello Server!");
+    });
+
     /*figure out how to host web controller: open python terminal 
     python -m http.server 8000*/
 });
