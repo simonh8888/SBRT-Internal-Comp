@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     resetStickPosition(); // Initialize stick position
 
     //Initialize WebSocket connection
-    let socket = new WebSocket("ws://172.20.10.4:80/direction"); //[ip]:[port]/[route]
+    let socket = new WebSocket("ws://192.168.0.211:80/direction"); //[ip]:[port]/[route]
     socket.addEventListener("open", () => {
         socket.send("Hello Server!");
     });
