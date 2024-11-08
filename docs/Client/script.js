@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     let x = 0;
     let y = 0;
     let led = 0;
+    let direction = 'stopped';
 
     const resetStickPosition = () => {
         stick.style.top = '50%'; // Center vertically
@@ -37,6 +38,31 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         moveStick(x, y); // Move the stick immediately
     };
 
+    // Function to calculate angle and determine direction
+    function getDirection(x, y) {
+
+
+        let angle = Math.atan2(y, x) * (180 / Math.PI);
+         // Adjust angle to be in the range [0, 360)
+        if (angle < 0) {
+            angle += 360;
+        }
+        console.log(angle)
+        direction = 'stopped';
+
+        if (angle >= 45 && angle < 135) {
+            direction = 'backward'; //inverted because it is easier this way
+        } else if (angle >= 135 && angle < 225) {
+            direction = 'left';
+        } else if (angle >= 225 && angle < 315) {
+            direction = 'forward'; //inverted because it is easier this way
+        } else {
+            direction = 'right'; // Covers the angle from 315 to 45
+        }
+
+        return direction;
+    }
+
     const startDragging = (event) => {
         dragging = true;
         led = 1;
@@ -49,8 +75,9 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         
         sendInterval = setInterval(() => {
             if (socket.readyState === WebSocket.OPEN) {
-                console.log(JSON.stringify({ x, y: -y, led: led })); //debug
-                socket.send(JSON.stringify({ x, y: -y, led: led }));
+                let dir = getDirection(x, y)
+                console.log(JSON.stringify({ dir: dir, led: led })); //debug
+                socket.send(JSON.stringify({ dir: dir, led: led }));
             }
         }, 100); // Adjust the interval as needed (in milliseconds)
     };
@@ -60,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         x = 0;
         y = 0;
         led = 0;
+        direction = 'stopped';
         resetStickPosition();
     };
 
