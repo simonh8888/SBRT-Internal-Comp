@@ -1,4 +1,4 @@
-# Run these on thonny, named main.py 
+# Run these on thonny
 from microdot import Microdot
 from microdot.websocket import with_websocket
 from microdot.cors import CORS
@@ -17,24 +17,36 @@ right_wheel_pin1, right_wheel_pin2 = Pin(20, Pin.OUT), Pin(21, Pin.OUT)
 
 # Test LEDs
 led = Pin(2, Pin.OUT)
+led_connected = Pin(18, Pin.OUT)
+led_wireless = Pin('LED', Pin.OUT)
+
+led_wireless.value(1)
+time.sleep(1)
+led_wireless.value(0)
 
 # Connect to Wi-Fi
+time.sleep(2)
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
-wlan.connect('iPhone', 'asED7474')
-time.sleep(5)
+wlan.connect(secrets.SSID, secrets.PASSWORD)
+time.sleep(2)
 
 # Wait for connection
 max_attempts = 10
 attempt = 0
 
 while not wlan.isconnected() and attempt < max_attempts:
+    led_wireless.value(1)
     print(f"Trying to connect to {secrets.SSID} (Attempt {attempt + 1}/{max_attempts})...")
     time.sleep(10)
     attempt += 1
-
+    led_wireless.value(0)
+    time.sleep(1)
 if wlan.isconnected():
     print("Connected to IP:", wlan.ifconfig()[0])
+    led_connected.value(1)
+    time.sleep(5)
+    led_connected.value(0)
 else:
     print("Failed to connect to Wi-Fi. Please check your SSID and password.")
 
