@@ -14,15 +14,11 @@ motor1_pwm = PWM(Pin(3, Pin.OUT), freq = 1000)
 motor1_in1 = Pin(0, Pin.OUT)
 motor1_in2 = Pin(10, Pin. OUT)
 
-motor2_pwm = PWM(Pin(11, Pin.OUT), freq = 1000)
+motor2_pwm = PWM(Pin(11, Pin.OUT), freq = 500) #far left
 motor2_in1 = Pin(5, Pin. OUT)
 motor2_in2 = Pin(9, Pin.OUT)
 
-motor3_pwm = PWM(Pin(27, Pin.OUT), freq = 1000)
-motor3_in1 = Pin(26, Pin. OUT)
-motor3_in2 = Pin(22, Pin. OUT)
-
-motor4_pwm = PWM (Pin(19, Pin.OUT), freq = 1000)
+motor4_pwm = PWM (Pin(19, Pin.OUT), freq = 500) #far right
 motor4_in1 = Pin(20, Pin.OUT)
 motor4_in2 = Pin(21, Pin.OUT)
 
@@ -37,86 +33,58 @@ led_wireless.value(0)
 
 # Function to stop all motors
 def stop():
-    motor1_in1.value(0)
-    motor1_in2.value(0)
     motor2_in1.value(0)
     motor2_in2.value(0)
-    motor3_in1.value(0)
-    motor3_in2.value(0)
-    motor4_in1.value(0)
-    motor4_in2.value(0)
+    motor1_in1.value(0)
+    motor1_in2.value(0)
     
-    motor1_pwm.duty_u16(0)
     motor2_pwm.duty_u16(0)
-    motor3_pwm.duty_u16(0)
-    motor4_pwm.duty_u16(0)
+    motor1_pwm.duty_u16(0)
 
 # Function to move forward
 def move_forward(speed):
-    motor1_in1.value(1)
-    motor1_in2.value(0)
     motor2_in1.value(1)
     motor2_in2.value(0)
-    motor3_in1.value(1)
-    motor3_in2.value(0)
-    motor4_in1.value(1)
-    motor4_in2.value(0)
-
-    motor1_pwm.duty_u16(speed)
-    motor2_pwm.duty_u16(speed)
-    motor3_pwm.duty_u16(speed)
-    motor4_pwm.duty_u16(speed)
-
-def move_backward(speed):
     motor1_in1.value(0)
     motor1_in2.value(1)
+
+    motor2_pwm.duty_u16(speed)
+    motor1_pwm.duty_u16(speed-18000)
+
+def move_backward(speed):
     motor2_in1.value(0)
     motor2_in2.value(1)
-    motor3_in1.value(0)
-    motor3_in2.value(1)
-    motor4_in1.value(0)
-    motor4_in2.value(1)
+    motor1_in1.value(1)
+    motor1_in2.value(0)
 
-    motor1_pwm.duty_u16(speed)
     motor2_pwm.duty_u16(speed)
-    motor3_pwm.duty_u16(speed)
-    motor4_pwm.duty_u16(speed)
+    motor1_pwm.duty_u16(speed-18000)
 
 def turn_left(speed):
     # Turn off left motors
-    motor1_in1.value(0)
-    motor1_in2.value(0)
-    motor3_in1.value(0)
-    motor3_in2.value(0)
+    motor2_in1.value(0)
+    motor2_in2.value(1)
     
     # Run right motors forward
-    motor2_in1.value(1)
-    motor2_in2.value(0)
-    motor4_in1.value(1)
-    motor4_in2.value(0)
+    motor1_in1.value(0)
+    motor1_in2.value(1)
     
-    motor1_pwm.duty_u16(0)        # Left motors off
-    motor3_pwm.duty_u16(0)
-    motor2_pwm.duty_u16(speed)    # Right motors on
-    motor4_pwm.duty_u16(speed)
+    motor2_pwm.duty_u16(speed)        # Left motors off
+    # Right motors on
+    motor1_pwm.duty_u16(speed)
 
 def turn_right(speed):
     # Turn off right motors
-    motor2_in1.value(0)
-    motor2_in2.value(0)
-    motor4_in1.value(0)
-    motor4_in2.value(0)
-    
-    # Run left motors forward
     motor1_in1.value(1)
     motor1_in2.value(0)
-    motor3_in1.value(1)
-    motor3_in2.value(0)
+    
+    # Run left motors forward
+    motor2_in1.value(1)
+    motor2_in2.value(0)
 
-    motor2_pwm.duty_u16(0)        # Right motors off
-    motor4_pwm.duty_u16(0)
-    motor1_pwm.duty_u16(speed)    # Left motors on
-    motor3_pwm.duty_u16(speed)
+    # Right motors off
+    motor1_pwm.duty_u16(speed)
+    motor2_pwm.duty_u16(speed)    # Left motors on
 
 # Connect to Wi-Fi
 time.sleep(2)
@@ -152,9 +120,13 @@ CORS(app, allowed_origins = '*', allow_credentials = True)
 def index(request):
     return "hello world"
 
+last_direction = None
+last_led_status = None
+
 @app.get('/direction')
 @with_websocket
-async def index(request, ws): 
+async def index(request, ws):
+    global last_direction, last_led_status
     try:
         while True:
             data = await ws.receive()
@@ -166,26 +138,30 @@ async def index(request, ws):
                     json_data = ujson.loads(data)
                     direction = json_data['dir']
                     led_status = json_data['led']  # Handle LED control (on/off)
-                    print(f"Joystick Position - Direction: {direction}, LED Status: {led_status}")
+                    if direction != last_direction or led_status != last_led_status:
+                        print(f"Joystick Position - Direction: {direction}, LED Status: {led_status}")
 
-                    # Handle LED Control
-                    if led_status == 1:
-                        led.value(1)  # Turn the LED on
-                    elif led_status == 0:
-                        led.value(0)  # Turn the LED
+                        last_direction = direction
+                        last_led_status = led_status
                         
-                    # Motor control
-                    s = 65535
-                    if direction == 'forward':
-                        move_forward(s)  # Move forward when y > 0
-                    elif direction == 'backward':
-                        move_backward(s) # Move backward when y < 0
-                    elif direction == 'right' and led_status == 1:
-                        turn_right(s)    # Turn right when x > 0
-                    elif direction == 'left':
-                        turn_left(s)     # Turn left when x < 0
-                    elif direction == 'right' and led_status == 0:
-                        stop()
+                        # Handle LED Control
+                        if led_status == 1:
+                            led.value(1)  # Turn the LED on
+                        elif led_status == 0:
+                            led.value(0)  # Turn the LED
+                            
+                        # Motor control
+                        s = 65000 
+                        if direction == 'forward':
+                            move_forward(s)  # Move forward when y > 0
+                        elif direction == 'backward':
+                            move_backward(s) # Move backward when y < 0
+                        elif direction == 'right' and led_status == 1:
+                            turn_right(s//2)    # Turn right when x > 0
+                        elif direction == 'left':
+                            turn_left(s//2)     # Turn left when x < 0
+                        elif direction == 'right' and led_status == 0:
+                            stop()
                 except Exception as e:
                     print(f"Error parsing data: {e}")
     except Exception as e:

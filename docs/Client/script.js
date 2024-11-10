@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             y = Math.sin(angle) * radius; // Scale y to the edge of the radius
         }
 
+        console.log("x: " + x + "\ny: " + y);
+
         // Adjust for centering of the stick
         moveStick(x, y); // Move the stick immediately
     };
@@ -108,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     resetStickPosition(); // Initialize stick position
 
     //Initialize WebSocket connection
-    let socket = new WebSocket("ws://192.168.0.211:80/direction"); //[ip]:[port]/[route]
+    let socket = new WebSocket("ws://192.168.1.69:80/direction"); //[ip]:[port]/[route]
     socket.addEventListener("open", () => {
         socket.send("Hello Server!");
     });
